@@ -76,7 +76,7 @@ class GamessCalculation(Job):
 
 """
         pass  
-    def run(self, nidlist=None, results=None):
+    def run(self, threadID, nidlist=None, results=None):
         wb = re.compile(r'\s+')
         path = "data/{0}".format(wb.sub('-', self.description))
         mkdir(path)
@@ -96,7 +96,8 @@ class GamessCalculation(Job):
         f.write(self.input_string())
         f.close()
         # launch job
-        cmd = "cd {path}; ln -f -s ../../rungms-xt; ./rungms-xt input.inp asis {cores} {ppn} {nid}".format(path=path, cores=self.cores(), ppn=self.ppn, nid=nidlist[0])
+        nidstr = ",".join(nidlist)
+        cmd = "cd {path}; ln -f -s ../../rungms-xt; ./rungms-xt input.inp asis {cores} {ppn} \"{nid}\" {threadID}".format(path=path, cores=self.cores(), ppn=self.ppn, nid=nidstr, threadID=threadID)
         import subprocess
         subprocess.call( cmd, shell=True )
         # os.system( cmd )
@@ -174,8 +175,7 @@ def JobLauncher(threadID, q, nodeq):
                   Description: {desc}
                   Nidlist: {nids}
         """.format(thread=threadID,type=job.type(),nodes=job.nodes, ppn=job.ppn, cores=job.cores(), desc=job.description,nids=nids)
-        job.run(nidlist=nids,results=results)
-        time.sleep(1)
+        job.run(threadID, nidlist=nids,results=results)
         q.task_done()
         for nid in nids:
             nodeq.put( nid )
