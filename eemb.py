@@ -100,6 +100,11 @@ class GamessCalculation(Job):
         cmd = "cd {path}; ln -f -s ../../rungms-xt; ./rungms-xt input.inp asis {cores} {ppn} \"{nid}\" {threadID}".format(path=path, cores=self.cores(), ppn=self.ppn, nid=nidstr, threadID=threadID)
         import subprocess
         subprocess.call( cmd, shell=True )
+        if grep('TERMINATED NORMALLY',out):
+           return 1
+        subprocess.call(['rm','-rf',path])
+        return 0
+
         # os.system( cmd )
         # import subprocess as sub
         # p = sub.Popen( cmd, stdout=sub.PIPE, stderr=sub.PIPE, shell=True )
@@ -107,6 +112,18 @@ class GamessCalculation(Job):
         # f = open(out, "w")
         # f.write( output )
         # f.close()
+
+def grep(find_str,fname):
+    with open(fname, "r") as f:
+        f.seek (0, 2)           # Seek @ EOF
+        fsize = f.tell()        # Get Size
+        f.seek (max (fsize-8096, 0), 0) # Set pos @ last n chars
+        lines = f.readlines()       # Read to end
+    lines = lines[-100:]    # Get last 100 lines
+    for line in lines:
+        if find_str in line:
+            return True
+    return False    
 
 
 class AtomicCoordinate(object):
@@ -175,8 +192,11 @@ def JobLauncher(threadID, q, nodeq):
                   Description: {desc}
                   Nidlist: {nids}
         """.format(thread=threadID,type=job.type(),nodes=job.nodes, ppn=job.ppn, cores=job.cores(), desc=job.description,nids=nids)
-        job.run(threadID, nidlist=nids,results=results)
+        status = job.run(threadID, nidlist=nids,results=results)
         q.task_done()
+        if status == 0:
+           print "WARNING: REQUEUING JOB - {desc}".format(desc=job.description)
+           q.put( job )
         for nid in nids:
             nodeq.put( nid )
 
@@ -259,7 +279,7 @@ if __name__ == '__main__':
     for m in monomers:
         description = "{m1}".format(m1=m.description)
         priority = int(1)
-        calc = GamessCalculation( priority, description, nodes=1, ppn=8, qm=[m] )
+        calc = GamessCalculation( priority, description, nodes=4, ppn=8, qm=[m] )
         q.put( calc )
 
     for dimer in itertools.combinations(monomers, 2):
