@@ -256,7 +256,20 @@ if __name__ == '__main__':
     generateNidList(node_count)
     parseNidList()
 
-    # queue up trimers
+    for m in monomers:
+        description = "{m1}".format(m1=m.description)
+        priority = int(1)
+        calc = GamessCalculation( priority, description, nodes=1, ppn=8, qm=[m] )
+        q.put( calc )
+
+    for dimer in itertools.combinations(monomers, 2):
+        description = "{m1}-{m2}".format(m1=dimer[0].description, m2=dimer[1].description)
+        td = 0
+        td += distanceBetween(dimer[0], dimer[1])
+        priority = int(td)
+        calc = GamessCalculation( priority, description, nodes=4, ppn=8, qm=dimer )
+        q.put( calc )
+
     for trimer in itertools.combinations(monomers, 3):
         description = "{m1}-{m2}-{m3}".format(m1=trimer[0].description, m2=trimer[1].description, m3=trimer[2].description)
         td = 0
@@ -266,6 +279,7 @@ if __name__ == '__main__':
         priority = int(td)
         calc = GamessCalculation( priority, description, nodes=4, ppn=8, qm=trimer )
         q.put( calc )
+
     print "{0} total calculations".format(q.qsize())
 
     # initialize threads & launch calculations
