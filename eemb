@@ -1,0 +1,44 @@
+#!/usr/bin/python
+
+from launcher import eemb_launch
+from analyzer import eemb_analyze
+
+import time
+import argparse
+
+
+parser = argparse.ArgumentParser(description="""
+Electrostatic Embedded Many-Body Method Python Driver
+=====================================================
+""")
+
+subparsers = parser.add_subparsers(help="Commands",dest='command')
+
+# launch options
+launch_group = subparsers.add_parser('launch',help="Launches EEMB Calculations")
+launch_group.add_argument('--node-count', action="store", default=0, type=int)
+launch_group.add_argument('--max-concurrent-jobs', action="store", default=0, type=int)
+
+# analyze options
+analyze = subparsers.add_parser('analyze',help="Analyze EEMB Calculations")
+analyze.add_argument('--process-data', action="store_true", default=False)
+analyze.add_argument('--with-summary', action="store_true", default=False)
+analyze.add_argument('--plot-efp-fit-type', action="store")
+analyze.add_argument('--delete-cache', action="store_true", default=False)
+
+# standard options
+parser.add_argument('xyzfile', action="store")
+
+if __name__ == '__main__':
+    start = time.time()
+    args = parser.parse_args()
+
+    try:
+       { 'analyze': eemb_analyze,
+         'launch' : eemb_launch   }[args.command](args)
+    except:
+       print "An Unknown/Unhandled Error Occurred."
+
+    finish = time.time()
+    print "walltime = {time}".format(time=(finish-start))
+
