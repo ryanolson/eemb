@@ -2,6 +2,7 @@
 
 from launcher import eemb_launch
 from analyzer import eemb_analyze
+from efpfit   import eemb_efpfit
 
 import time
 import argparse
@@ -23,8 +24,13 @@ launch_group.add_argument('--max-concurrent-jobs', action="store", default=0, ty
 analyze = subparsers.add_parser('analyze',help="Analyze EEMB Calculations")
 analyze.add_argument('--process-data', action="store_true", default=False)
 analyze.add_argument('--with-summary', action="store_true", default=False)
-analyze.add_argument('--plot-efp-fit-type', action="store")
 analyze.add_argument('--delete-cache', action="store_true", default=False)
+
+# efp fit options
+efpfit = subparsers.add_parser('efpfit', help="Fit EFPs to QM monomers")
+efpfit.add_argument('--plot-fit-type', action="store")
+efpfit.add_argument('--show-qm-coords', action="store_true",default=False)
+efpfit.add_argument('--show-efp-coords', action="store_true",default=False)
 
 # standard options
 parser.add_argument('xyzfile', action="store")
@@ -33,11 +39,12 @@ if __name__ == '__main__':
     start = time.time()
     args = parser.parse_args()
 
-    try:
-       { 'analyze': eemb_analyze,
-         'launch' : eemb_launch   }[args.command](args)
-    except:
-       print "An Unknown/Unhandled Error Occurred."
+#   try:
+    { 'analyze': eemb_analyze,
+      'launch' : eemb_launch,
+      'efpfit' : eemb_efpfit  }[args.command](args)
+#   except:
+#      print "An Unknown/Unhandled Error Occurred."
 
     finish = time.time()
     print "walltime = {time}".format(time=(finish-start))
