@@ -138,22 +138,43 @@ class AtomicCoordinate(object):
         if self.l:
            return self.l
         return "RMO"
+    def xyz(self):
+        return (self.x, self.y, self.z)
     def coordinate_string(self):
         return "{l}    {zn}.0   {x:15.10f} {y:15.10f} {z:15.10f}".format(l=self.label(), zn=self.znuc, x=self.x, y=self.y, z=self.z)
-
+    def coordinate_without_znuc(self):
+        return "{l}    {x:15.10f} {y:15.10f} {z:15.10f}".format(l=self.label(), x=self.x, y=self.y, z=self.z)
 
 class Monomer(object):
     def __init__(self, description, atoms):
         self.description = description
         self.atoms = deepcopy(atoms)
         return
-    def coordinates(self):
+    def print_coordinates(self,array):
         s = ""
-        for a in self.atoms:
+        for a in array:
             if s != "":
                s += "\n"
             s += a.coordinate_string()
         return s
+    def print_coordinates_without_znuc(self,array):
+        s = ""
+        for a in array:
+            if s != "":
+               s += "\n"
+            s += a.coordinate_without_znuc()
+        return s
+    def coordinates(self):
+        return self.print_coordinates(self.atoms)
+    def fit_efp1_rhf(self):
+        pass
+    def fit_efp1_dft(self):
+        pass
+    def efp_dft_coordinates(self):
+        return self.print_coordinates_without_znuc(self.efp_dft)
+    def efp_rhf_coordinates(self):
+        return self.print_coordinates_without_znuc(self.efp_rhf)
+        
 
 def distanceBetween(m1, m2):
     x1 = y1 = z1 = 0.0
@@ -175,6 +196,34 @@ def distanceBetween(m1, m2):
     r2 = (x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2
     return r2
 
+
+def mapEFP1WaterOntoMonomer(m):
+    # assert 3 atoms
+    # assert 1 oxygen & 2 hydrogens
+    
+    # EFP-1 Definition
+    # O1     0.17518     4.35630    -0.65086
+    # H2    -0.83927     3.98667    -0.44045
+    # H3     0.18512     4.86728    -1.62492
+    e_o1 = ( 0.17518,    4.35630,   -0.65086)
+    e_h2 = (-0.83927,    3.98667,   -0.44045)
+    e_h3 = ( 0.18512,    4.86728,   -1.62492)
+
+    e_norm = v_cross( v_sub(e_h2,e_o1), v_sub(e_h3,e_o1) )
+    print "efp norm = ",e_norm
+
+    e_hoh_angle = v_angle( v_sub(e_h2,e_o1), v_sub(e_h3,e_o1) )
+    print "efp h2-o1-h3 angle = ",e_hoh_angle
+
+#   h2_filled = False
+#   for a in m.atoms:
+#      if a.znuc == 8:
+#         q_o = (a.x,a.y.a.z)
+#      if a.znuc == 1:
+#         if h1_filled:
+#            q_h3 = (a.x,a.y.a.z)
+#         else:
+#            q_h2 = (a.x,a.y.a.z)
 
 def mkdir(d):
     if not os.path.exists(d):
