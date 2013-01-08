@@ -35,7 +35,7 @@ class GamessCalculation(Job):
         return """
  $CONTRL coord=unique SCFTYP=rhf runtyp=energy cctyp=ccsd(t) $END
  $contrl maxit=60 ispher=1 iskprp=1 icut=11 nprint=-5 $end
- $system parall=.t. mwords=20 memddi=400 timlim=999999 $end
+ $system parall=.t. mwords=40 memddi=400 timlim=999999 $end
  $BASIS GBASIS=acct $end
  $scf fdiff=.f. diis=.t. soscf=.f. dirscf=.t. $end
  $ccinp ikcut=1 ncore=0 maxcc=50 $end
@@ -102,8 +102,10 @@ class GamessCalculation(Job):
         subprocess.call( cmd, shell=True )
         if grep('TERMINATED NORMALLY',out):
            return 1
+        subprocess.call(['tail',out])
         subprocess.call(['rm','-rf',path])
         return 0
+#       return 1
 
         # os.system( cmd )
         # import subprocess as sub
